@@ -189,17 +189,22 @@ export default function AdminPage() {
   if (previewScenario) return <div className="space-y-4"><p className="border-l-2 border-[var(--accent)] pl-3 text-sm text-[var(--muted)]">Пробный раунд черновика · попытка не публикует сценарий в каталоге.</p><PlayArena scenario={previewScenario} onExit={() => { setPreviewScenario(null); void refreshList(); }} /></div>;
 
   return (
-      <div className="space-y-8">
+      <div className="admin-page">
+      <header className="dossier-intro">
+        <div><p className="section-kicker">Конструктор кейсов</p><h1>Создайте ситуацию,<br />в которой есть о чём спорить.</h1></div>
+        <div><p className="text-sm leading-6 text-[var(--muted)]">Задайте игроку понятную цель, а оппоненту — интересы и границы. Результат разговора проверяется по наблюдаемым репликам.</p></div>
+      </header>
+      <ol className="workflow-strip" aria-label="Порядок подготовки сценария">
+        <li><span>01</span><div><h2>Черновик</h2><p>Соберите бриф, персонажа и условия оценки. Сохраните с пометкой «Черновик».</p></div></li>
+        <li><span>02</span><div><h2>Пробный раунд</h2><p>Проверьте сохранённый кейс в разговоре. При необходимости вернитесь к настройкам.</p></div></li>
+        <li><span>03</span><div><h2>Публикация</h2><p>Выберите «Опубликовать в локальном каталоге» и сохраните: кейс станет доступен игрокам.</p></div></li>
+      </ol>
       <div>
-        <h1 className="text-2xl font-semibold">Админ-контур</h1>
-        <p className="mt-2 text-sm text-[var(--muted)]">
-          Соберите кейс из публичного брифа, скрытых интересов, сигналов и исходов. Сначала сохраните черновик, проверьте его в пробном раунде и только потом опубликуйте.
-        </p>
-        <p className="mt-2 rounded-lg border border-[var(--warn)]/40 bg-[var(--warn)]/10 p-3 text-xs text-[var(--muted)]">Локальный демо-режим: админ-операции не защищены авторизацией. Не публикуйте этот сервер в открытом доступе; используйте только для доверенной локальной демонстрации.</p>
+        <p className="admin-warning mt-3 rounded-lg border border-[var(--warn)]/40 bg-[var(--warn)]/10 p-3 text-xs text-[var(--muted)]">Локальный демо-режим: админ-операции не защищены авторизацией. Не публикуйте этот сервер в открытом доступе; используйте только для доверенной локальной демонстрации.</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-3 rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-4">
+      <div className="admin-panels grid gap-5 lg:grid-cols-2">
+        <div className="admin-panel space-y-3 rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-4">
           <h2 className="font-medium">Параметры персонажа</h2>
           <label className="block text-xs text-[var(--muted)]">
             Роль
@@ -244,7 +249,7 @@ export default function AdminPage() {
           )}
         </div>
 
-        <div className="space-y-3 rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-4">
+        <div className="admin-panel space-y-3 rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-4">
           <h2 className="font-medium">Сценарий</h2>
           <label className="block text-xs text-[var(--muted)]">
             Название
