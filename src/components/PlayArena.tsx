@@ -1,5 +1,7 @@
 "use client";
 
+import { Icon } from "@/components/Icon";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AdvisorSidebar } from "@/components/AdvisorSidebar";
 import { FinalReportView } from "@/components/FinalReport";
@@ -35,43 +37,17 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
   const [speakReplies, setSpeakReplies] = useState(true);
   const [speechError, setSpeechError] = useState<string | null>(null);
   const userTurns = messages.filter((message) => message.role === "user").length;
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const transcriptRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
   useEffect(() => {
-    if (messages.length > 0) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length > 0 && transcriptRef.current) {
+      transcriptRef.current.scrollTo({ top: transcriptRef.current.scrollHeight, behavior: "smooth" });
+    }
   }, [messages]);
-
-  const attemptKey = `arena-attempt:${scenario.id}:${practiceMode}`;
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const savedId = localStorage.getItem(attemptKey);
-        if (savedId) {
-          const res = await fetch(`/api/attempts?id=${encodeURIComponent(savedId)}`);
-          if (res.ok) {
-            const data = await res.json();
-            const savedAttempt = data.attempt ?? data;
-            if (!cancelled && savedAttempt?.scenarioId === scenario.id && savedAttempt.status === "active") {
-              setAttemptId(savedAttempt.id); setMessages(savedAttempt.messages); setReady(true); return;
-            }
-            if (!cancelled && savedAttempt?.scenarioId === scenario.id && savedAttempt.status === "completed" && savedAttempt.report) {
-              setAttemptId(savedAttempt.id); setMessages(savedAttempt.messages); setReport(savedAttempt.report); setReady(true); return;
-            }
-          }
-        }
-        const res = await fetch("/api/attempts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: scenario.id, preview: scenario.status === "draft", profileId: getLocalProfileId(), practiceMode }) });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Не удалось начать раунд");
-        if (!cancelled) { setAttemptId(data.id); localStorage.setItem(attemptKey, data.id); setReady(true); }
-      } catch (error) { if (!cancelled) { setRoundError(error instanceof Error ? error.message : "Не удалось восстановить раунд"); setReady(true); } }
-    })();
-    return () => { cancelled = true; };
-  }, [attemptKey, scenario.id, scenario.status, practiceMode]);
 
   const fetchTemperature = useCallback(async (msgs: ChatMessage[]) => {
     setTempLoading(true);
@@ -90,6 +66,55 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
       setTempLoading(false);
     }
   }, []);
+
+  const attemptKey = `arena-attempt:${scenario.id}:${practiceMode}`;
+  const attemptInitRef = useRef<{
+    key: string;
+    promise: Promise<{ id: string; messages: ChatMessage[]; report: FinalReport | null }>;
+  } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    let initialization = attemptInitRef.current;
+    if (!initialization || initialization.key !== attemptKey) {
+      const promise = (async () => {
+        const savedId = localStorage.getItem(attemptKey);
+        if (savedId) {
+          const res = await fetch(`/api/attempts?id=${encodeURIComponent(savedId)}`);
+          if (res.ok) {
+            const data = await res.json();
+            const savedAttempt = data.attempt ?? data;
+            if (savedAttempt?.scenarioId === scenario.id && (savedAttempt.status === "active" || (savedAttempt.status === "completed" && savedAttempt.report))) {
+              return {
+                id: savedAttempt.id as string,
+                messages: (savedAttempt.messages ?? []) as ChatMessage[],
+                report: (savedAttempt.report ?? null) as FinalReport | null,
+              };
+            }
+          }
+        }
+        const res = await fetch("/api/attempts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: scenario.id, preview: scenario.status === "draft", profileId: getLocalProfileId(), practiceMode }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Не удалось начать раунд");
+        localStorage.setItem(attemptKey, data.id);
+        return { id: data.id as string, messages: [] as ChatMessage[], report: null };
+      })();
+      initialization = { key: attemptKey, promise };
+      attemptInitRef.current = initialization;
+    }
+    void initialization.promise.then((savedAttempt) => {
+      if (cancelled) return;
+      setAttemptId(savedAttempt.id);
+      setMessages(savedAttempt.messages);
+      if (savedAttempt.messages.length) void fetchTemperature(savedAttempt.messages);
+      setReport(savedAttempt.report);
+      setReady(true);
+    }).catch((error: unknown) => {
+      if (cancelled) return;
+      setRoundError(error instanceof Error ? error.message : "Не удалось восстановить раунд");
+      setReady(true);
+    });
+    return () => { cancelled = true; };
+  }, [attemptKey, fetchTemperature, scenario.id, scenario.status, practiceMode]);
 
   const fetchAdvice = useCallback(async (msgs: ChatMessage[]) => {
     setAdviceLoading(true);
@@ -189,21 +214,23 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="round-page">
+      <div className="round-context">
+      <div className="round-heading flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">{scenario.title}</h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
             Оппонент: {scenario.opponent.name} · {scenario.opponent.role}
           </p>
-          {scenario.playerGoal && <p className="mt-1 text-sm">Цель раунда: {scenario.playerGoal}</p>}
+
           {scenario.variation && <p className="mt-2 border-l-2 border-[var(--warn)] pl-2 text-xs text-[var(--muted)]">Повтор: изменено только «{scenario.variation.parameter}» — {scenario.variation.to}</p>}
+          <span className="round-mode-tag">{practiceMode === "guided" ? "С подсказками" : practiceMode === "diagnostic" ? "Стартовая диагностика · 3–5 ходов" : "Самостоятельно"}</span>
         </div>
-        <div className="flex gap-2">
+        <div className="round-actions">
           <button
             type="button"
             onClick={onExit}
-            className="rounded-xl border border-[var(--card-border)] px-3 py-2 text-sm hover:bg-white/5"
+            className="rounded-xl border border-[var(--card-border)] px-3 text-sm hover:bg-white/5"
           >
             К сценариям
           </button>
@@ -211,7 +238,7 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
             type="button"
             onClick={() => void endNegotiation()}
             disabled={ending || (practiceMode === "diagnostic" && userTurns < 3)}
-            className="rounded-xl bg-[var(--warn)]/90 px-3 py-2 text-sm font-medium text-black hover:brightness-110 disabled:opacity-50"
+            className="rounded-xl bg-[var(--warn)]/90 px-3 text-sm font-medium text-black hover:brightness-110 disabled:opacity-50"
           >
             {ending ? "Формирую…" : "Завершить переговоры"}
           </button>
@@ -220,14 +247,23 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
 
       {roundError && <p role="alert" className="rounded-lg border border-[var(--bad)]/40 bg-[var(--bad)]/10 p-3 text-sm text-[var(--bad)]">{roundError}</p>}
 
-      <div className="rounded-xl border border-[var(--card-border)] bg-[var(--accent-soft)]/40 p-3 text-sm">
-        <strong className="text-[var(--accent)]">Ваш бриф:</strong>{" "}
-        {scenario.playerBrief}
       </div>
 
-      <div className={`grid gap-4 ${practiceMode === "independent" ? "grid-cols-1" : "lg:grid-cols-[1fr_280px]"}`}>
-        <div className="flex min-h-[420px] flex-col rounded-xl border border-[var(--card-border)] bg-[var(--card)]">
-          <div className="flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="round-layout">
+        <aside className="round-dossier" aria-label="Ваша задача в переговорах">
+          <p className="dossier-label">Ваша сторона</p>
+          <h2>{scenario.playerRole ?? "Участник переговоров"}</h2>
+          {scenario.playerGoal && <div className="dossier-goal"><span>К чему стремиться</span><p>{scenario.playerGoal}</p></div>}
+          <div className="dossier-brief"><h3>Что известно перед встречей</h3><p>{scenario.playerBrief}</p></div>
+          <a href="/learn" target="_blank" rel="noreferrer">Справочник приёмов <Icon name="arrow-up-right" size={14} /></a>
+        </aside>
+        <section className="round-chat flex min-h-[420px] flex-col rounded-xl border border-[var(--card-border)] bg-[var(--card)]" aria-label="Диалог переговоров">
+          <header className="round-chat-header">
+            <span className="round-avatar" aria-hidden="true">{scenario.opponent.name.slice(0, 1)}</span>
+            <span className="round-person"><strong>{scenario.opponent.name}</strong><small>{scenario.opponent.role}</small></span>
+            <span className="round-presence"><i /> {busy ? "Печатает" : "В диалоге"}</span>
+          </header>
+          <div ref={transcriptRef} className="round-transcript flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite" aria-relevant="additions text">
             {!ready && <p className="text-sm text-[var(--muted)]">Восстанавливаю раунд…</p>}
             {ready && messages.length === 0 && (
               <p className="text-sm text-[var(--muted)]">
@@ -235,20 +271,16 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
               </p>
             )}
             {messages.map((m, i) => (
-              <div
+              <article
                 key={i}
-                className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
-                  m.role === "user"
-                    ? "ml-auto bg-[var(--accent)] text-white"
-                    : "bg-black/30 text-[var(--foreground)]"
-                }`}
+                className={"round-message " + (m.role === "user" ? "is-player ml-auto" : "is-opponent")}
               >
-                <div className="mb-0.5 text-xs font-medium opacity-80">
+                <div className="round-message-author">
                   {m.role === "user" ? "Вы" : scenario.opponent.name}
                 </div>
                 {m.content}
                 {m.role === "assistant" && (
-                  <span className="ml-2 inline-flex gap-1">
+                  <span className="round-message-tools">
                     <button type="button" className="rounded-md px-2 py-1 text-xs underline underline-offset-2 hover:bg-[var(--accent-soft)]" onClick={() => {
                       const started = speakReply(m.content, () => setSpeechError("Не удалось воспроизвести ответ. Прочитайте его в чате."));
                       setSpeechError(started ? null : "Озвучивание недоступно в этом браузере. Ответ доступен текстом.");
@@ -258,11 +290,11 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
                     }}>Остановить</button>
                   </span>
                 )}
-              </div>
+              </article>
             ))}
-            <div ref={bottomRef} />
+            {busy && <div className="round-typing" aria-label="Собеседник готовит ответ"><i /><i /><i /></div>}
           </div>
-          <div className="border-t border-[var(--card-border)] px-3 pt-3">
+          <div className="round-chat-tools border-t border-[var(--card-border)] px-3 pt-3">
             <VoiceControls onTranscript={(text) => { setInput(text); setSpeechError(null); }} />
             <label className="mt-2 inline-flex items-center gap-2 text-xs text-[var(--muted)]">
               <input type="checkbox" checked={speakReplies} onChange={(e) => setSpeakReplies(e.target.checked)} className="accent-[var(--accent)]" />
@@ -272,13 +304,14 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
           </div>
           <form
             onSubmit={sendMessage}
-            className="flex gap-2 p-3"
+            className="round-composer flex"
           >
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ваша реплика…"
               disabled={busy || !ready || !attemptId}
+              aria-label="Ваша реплика"
               className="flex-1 rounded-xl border border-[var(--card-border)] bg-black/30 px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
             />
             <button
@@ -289,20 +322,20 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
               {busy ? "…" : "Отправить"}
             </button>
           </form>
-        </div>
+        </section>
 
-        {practiceMode === "guided" && <div className="flex flex-col gap-4">
+        <aside className="round-rail" aria-label="Состояние раунда">
           <TemperatureMeter
             score={tempScore}
             reason={tempReason}
             loading={tempLoading}
           />
-          {practiceMode === "guided" && <div className="min-h-[220px] flex-1"><AdvisorSidebar
+          {practiceMode === "guided" ? <div className="min-h-[220px] flex-1"><AdvisorSidebar
               advice={advice}
               loading={adviceLoading}
               onRefresh={() => void fetchAdvice(messages)}
-            /></div>}
-        </div>}
+            /></div> : <p className="round-mode-note">{practiceMode === "diagnostic" ? "В диагностике вы наблюдаете за ходом беседы без тактических подсказок." : "Самостоятельный режим: оценка состояния доступна, тактические подсказки отключены."}</p>}
+        </aside>
       </div>
 
       {report && (
