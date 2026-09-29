@@ -1,5 +1,6 @@
+import { accessibleAttempt } from "@/lib/access";
 import { NextRequest, NextResponse } from "next/server";
-import { appendTurn, getAttempt } from "@/lib/attempts/store";
+import { appendTurn } from "@/lib/attempts/store";
 import { chatCompletion } from "@/lib/llm/client";
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -8,7 +9,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const text = body.text?.trim();
   if (!text) return NextResponse.json({ error: "Реплика не должна быть пустой" }, { status: 400 });
   if (text.length > 2000) return NextResponse.json({ error: "Реплика не должна превышать 2000 символов" }, { status: 400 });
-  const attempt = await getAttempt(id);
+  const attempt = await accessibleAttempt(req, id);
   if (!attempt) return NextResponse.json({ error: "Попытка не найдена" }, { status: 404 });
   if (attempt.status !== "active") return NextResponse.json({ error: "Завершённый раунд нельзя продолжить" }, { status: 409 });
   const variationContext = attempt.scenario.variation ? `Изменён ровно один параметр повторной попытки: ${attempt.scenario.variation.parameter}. Новое условие: ${attempt.scenario.variation.to}. Учитывай его в ответах.` : "";

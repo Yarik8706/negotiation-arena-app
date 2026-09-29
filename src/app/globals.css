@@ -991,6 +991,10 @@ small,
 }
 
 .brand-copy > span { font-size: 15px !important; }
+@media (max-width: 420px) {
+  .brand-copy > span { font-size: 12px !important; }
+  .brand-copy small { display: none; }
+}
 .section-kicker { letter-spacing: .08em; }
 .catalog-hero .section-kicker { color: var(--accent-strong) !important; }
 .presentation-lede { color: var(--muted) !important; }

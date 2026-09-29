@@ -27,7 +27,8 @@ export default function GroupPage() {
   async function finish() { if (!session) return; setBusy(true); try { const res = await fetch(`/api/group-rooms/${session.id}/finish`, { method: "POST", headers: auth }); const data = await res.json(); if (!res.ok) throw new Error(data.error); setRoom(data as Room); } catch (error) { setNotice(error instanceof Error ? error.message : "Не удалось завершить раунд"); } finally { setBusy(false); } }
   const currentInvite = session?.invite ? `${origin}/group?invite=${session.invite}` : "";
   const lastHuman = room?.lines.filter((line) => !line.bot).at(-1);
-  const canSpeak = room?.status === "active" && (room.template === "project-team" || !lastHuman || lastHuman.role !== room.role);
+  const ownMember = room?.members.find((member) => member.role === room.role);
+  const canSpeak = room?.status === "active" && !ownMember?.finished && (room.template !== "client-seller" || !lastHuman || lastHuman.role !== room.role);
 
   return <div className="group-page mx-auto max-w-5xl pb-12">
     <header className="dossier-intro">

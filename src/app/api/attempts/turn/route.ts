@@ -1,5 +1,6 @@
+import { accessibleAttempt } from "@/lib/access";
 import { NextRequest, NextResponse } from "next/server";
-import { appendTurn, getAttempt } from "@/lib/attempts/store";
+import { appendTurn } from "@/lib/attempts/store";
 import { chatCompletion } from "@/lib/llm/client";
 export async function POST(req: NextRequest) {
   let body: { attemptId?: string; text?: string };
@@ -7,7 +8,7 @@ export async function POST(req: NextRequest) {
   const text = body.text?.trim();
   if (!body.attemptId || !text) return NextResponse.json({ error: "Нужны attemptId и непустая реплика" }, { status: 400 });
   if (text.length > 2000) return NextResponse.json({ error: "Реплика не должна превышать 2000 символов" }, { status: 400 });
-  const attempt = await getAttempt(body.attemptId);
+  const attempt = await accessibleAttempt(req, body.attemptId);
   if (!attempt) return NextResponse.json({ error: "Попытка не найдена" }, { status: 404 });
   if (attempt.status !== "active") return NextResponse.json({ error: "Завершённый раунд нельзя продолжить" }, { status: 409 });
   const history = attempt.messages.map(({ role, content }) => ({ role: role as "user" | "assistant", content }));

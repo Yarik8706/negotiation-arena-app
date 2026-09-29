@@ -2,10 +2,10 @@ import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 import { isDbConfigured, sql } from "@/lib/db";
-import { listAttempts } from "@/lib/attempts/store";
+import { listAttempts, listRankingAttempts } from "@/lib/attempts/store";
 import type { Attempt } from "@/lib/scenarios/types";
 
-const FILE = path.join(process.cwd(), "data", "profiles.json");
+const FILE = path.join(process.env.ARENA_DATA_DIR ?? path.join(process.cwd(), "data"), "profiles.json");
 
 export type Profile = {
   id: string;
@@ -48,15 +48,18 @@ async function getProfileDb(id: string): Promise<Profile | null> {
   return rows[0] ? parsePayload(rows[0].payload) : null;
 }
 
-async function upsertProfileDb(profile: Profile): Promise<void> {
+async function upsertProfileDb(profile: Profile, patch: Partial<Pick<Profile,"alias"|"publicRanking"|"calibration">>): Promise<Profile> {
+  const changes = { updatedAt:profile.updatedAt, ...Object.fromEntries(Object.keys(patch).filter((k)=>["alias","publicRanking","calibration"].includes(k)).map((k)=>[k, profile[k as keyof Profile]])) };
   const db = sql();
-  await db`
+  const rows = await db`
     INSERT INTO profiles (id, payload, updated_at)
     VALUES (${profile.id}, ${JSON.stringify(profile)}::jsonb, ${profile.updatedAt}::timestamptz)
     ON CONFLICT (id) DO UPDATE SET
-      payload = EXCLUDED.payload,
+      payload = profiles.payload || ${JSON.stringify(changes)}::jsonb,
       updated_at = EXCLUDED.updated_at
+    RETURNING payload
   `;
+  return parsePayload(rows[0].payload);
 }
 
 async function readProfiles(): Promise<Profile[]> {
@@ -85,8 +88,7 @@ export async function saveProfile(id: string, patch: Partial<Pick<Profile, "alia
     updatedAt: now,
   };
   if (isDbConfigured()) {
-    await upsertProfileDb(profile);
-    return profile;
+    return upsertProfileDb(profile, patch);
   }
   const profiles = await readProfilesJson();
   const index = profiles.findIndex((p) => p.id === id);
@@ -97,16 +99,15 @@ export async function saveProfile(id: string, patch: Partial<Pick<Profile, "alia
 }
 
 export async function getProgress(id: string) {
-  const [profiles, all] = await Promise.all([readProfiles(), listAttempts()]);
-  const profile = profiles.find((p) => p.id === id) ?? null;
+  const [profile, all] = await Promise.all([getProfile(id), listAttempts(id)]);
   const attempts = all.filter((a) => a.profileId === id && a.status === "completed" && a.report);
-  const skills = new Map<string, { name: string; mode: string; scores: number[]; evidence: number }>();
+  const skills = new Map<string, { name: string; mode: string; scenarioId: string; scenarioTitle: string; version: number; scores: number[]; evidence: number }>();
   for (const attempt of attempts) {
     if ((attempt.practiceMode ?? "independent") === "diagnostic") continue;
     for (const [name, score] of Object.entries(attempt.report?.skillScores ?? {})) {
       const mode = attempt.practiceMode ?? "independent";
-      const key = `${mode}:${name}`;
-      const entry = skills.get(key) ?? { name, mode, scores: [], evidence: 0 };
+      const key = `${attempt.scenarioId}:${attempt.scenarioVersion}:${mode}:${name}`;
+      const entry = skills.get(key) ?? { name, mode, scenarioId:attempt.scenarioId, scenarioTitle:attempt.scenario.title, version:attempt.scenarioVersion, scores: [], evidence: 0 };
       entry.scores.push(score);
       entry.evidence += 1;
       skills.set(key, entry);
@@ -116,6 +117,9 @@ export async function getProgress(id: string) {
     .map((item) => ({
       name: item.name,
       mode: item.mode,
+      scenarioId: item.scenarioId,
+      scenarioTitle: item.scenarioTitle,
+      version: item.version,
       score: Math.round(item.scores.reduce((a, b) => a + b, 0) / item.scores.length),
       attempts: item.evidence,
       trend: item.scores.length > 1 ? item.scores.at(-1)! - item.scores[0] : 0,
@@ -196,12 +200,13 @@ export async function getProgress(id: string) {
   };
 }
 
-export async function leaderboard(scenarioId: string, scenarioVersion: number, difficulty: string, mode: string) {
-  const [profiles, attempts] = await Promise.all([readProfiles(), listAttempts()]);
+export async function leaderboard(scenarioId: string, scenarioVersion: number, difficulty: string, mode: string, period = "all", viewerId?: string) {
+  const [profiles, attempts] = await Promise.all([readProfiles(), listRankingAttempts(scenarioId,period)]);
+  const inPeriod = (a: Attempt) => period === "all" || a.createdAt.startsWith(period);
   const byProfile = new Map<string, Attempt[]>();
   for (const a of attempts) {
     if (
-      a.profileId &&
+      a.profileId && inPeriod(a) &&
       a.status === "completed" &&
       a.report?.outcome &&
       a.scenarioId === scenarioId &&
@@ -212,13 +217,14 @@ export async function leaderboard(scenarioId: string, scenarioVersion: number, d
       byProfile.set(a.profileId, [...(byProfile.get(a.profileId) ?? []), a]);
     }
   }
-  return [...byProfile]
+  const ranked = [...byProfile]
     .flatMap(([id, rows]) => {
       const p = profiles.find((x) => x.id === id);
       if (!p?.publicRanking || !rows.length) return [];
       const best = Math.max(...rows.map((a) => a.report?.outcome?.score ?? 0));
       return [
         {
+          profileId: id,
           alias: p.alias,
           score: best,
           attempts: rows.length,
@@ -229,6 +235,23 @@ export async function leaderboard(scenarioId: string, scenarioVersion: number, d
         },
       ];
     })
-    .sort((a, b) => b.score - a.score || a.alias.localeCompare(b.alias, "ru"))
-    .slice(0, 50);
+    .sort((a, b) => b.score - a.score || a.alias.localeCompare(b.alias, "ru"));
+  const withRank = ranked.map((row, i) => ({ ...row, rank: ranked.findIndex((r) => r.score === row.score) + 1, order:i+1 }));
+  const own = viewerId ? withRank.find((r) => r.profileId === viewerId) : undefined;
+  return { rows: withRank.slice(0,50).map(({ profileId: _id, order: _order, ...row }) => { void _id; void _order; return row; }), ownPosition: own ? { rank:own.rank,score:own.score } : null };
+
+}
+
+export async function deleteProfile(id: string, historyOnly = false) {
+  if (isDbConfigured()) {
+    const db = sql();
+    await db.transaction([
+      db`DELETE FROM attempts WHERE payload->>'profileId' = ${id}`,
+      ...(historyOnly ? [] : [db`DELETE FROM profiles WHERE id = ${id}`]),
+    ]);
+  } else {
+    const { deleteAttempt } = await import("@/lib/attempts/store");
+    for (const attempt of await listAttempts()) if (attempt.profileId === id) await deleteAttempt(attempt.id);
+    if (!historyOnly) await writeProfilesJson((await readProfilesJson()).filter((p) => p.id !== id));
+  }
 }

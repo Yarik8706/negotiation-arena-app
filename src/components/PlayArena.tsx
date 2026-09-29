@@ -54,7 +54,7 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
     try {
       const res = await fetch("/api/temperature", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-profile-id": getLocalProfileId() },
         body: JSON.stringify({ messages: msgs }),
       });
       const data = await res.json();
@@ -79,7 +79,7 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
       const promise = (async () => {
         const savedId = localStorage.getItem(attemptKey);
         if (savedId) {
-          const res = await fetch(`/api/attempts?id=${encodeURIComponent(savedId)}`);
+          const res = await fetch(`/api/attempts?id=${encodeURIComponent(savedId)}`, { headers: { "x-profile-id": getLocalProfileId() } });
           if (res.ok) {
             const data = await res.json();
             const savedAttempt = data.attempt ?? data;
@@ -92,7 +92,7 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
             }
           }
         }
-        const res = await fetch("/api/attempts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: scenario.id, preview: scenario.status === "draft", profileId: getLocalProfileId(), practiceMode }) });
+        const res = await fetch("/api/attempts", { method: "POST", headers: { "Content-Type": "application/json", "x-profile-id": getLocalProfileId() }, body: JSON.stringify({ scenarioId: scenario.id, preview: scenario.status === "draft", profileId: getLocalProfileId(), practiceMode }) });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Не удалось начать раунд");
         localStorage.setItem(attemptKey, data.id);
@@ -121,7 +121,7 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
     try {
       const res = await fetch("/api/advisor", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-profile-id": getLocalProfileId() },
         body: JSON.stringify({ scenarioId: scenario.id, messages: msgs }),
       });
       const data = await res.json();
@@ -151,7 +151,7 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
     try {
       const res = await fetch("/api/attempts/turn", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-profile-id": getLocalProfileId() },
         body: JSON.stringify({ attemptId, text }),
       });
       const data = await res.json();
@@ -183,7 +183,7 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
       if (!attemptId) throw new Error("Попытка ещё не готова");
       const res = await fetch("/api/attempts/complete", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-profile-id": getLocalProfileId() },
         body: JSON.stringify({ attemptId }),
       });
       const data = await res.json();
@@ -206,7 +206,7 @@ export function PlayArena({ scenario, onExit, practiceMode = "independent" }: Pr
     if (!attemptId) return;
     setReady(false); setRoundError(null);
     try {
-    const res = await fetch("/api/attempts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenarioId: scenario.id, previousAttemptId: attemptId, variationId, preview: scenario.status === "draft", profileId: getLocalProfileId(), practiceMode }) });
+    const res = await fetch("/api/attempts", { method: "POST", headers: { "Content-Type": "application/json", "x-profile-id": getLocalProfileId() }, body: JSON.stringify({ scenarioId: scenario.id, previousAttemptId: attemptId, variationId, preview: scenario.status === "draft", profileId: getLocalProfileId(), practiceMode }) });
       const data = await res.json(); if (!res.ok) throw new Error(data.error || "Не удалось начать повтор");
       setAttemptId(data.id); localStorage.setItem(attemptKey, data.id);
       setMessages([]); setReport(null); setTempScore(null); setTempReason(null); setAdvice(null); setReady(true); if (practiceMode === "guided") void fetchAdvice([]);
