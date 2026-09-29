@@ -1,0 +1,53 @@
+import { promises as fs } from "fs";
+import path from "path";
+import { randomUUID } from "crypto";
+import type { Attempt } from "@/lib/scenarios/types";
+
+const FILE = path.join(process.cwd(), "data", "profiles.json");
+export type Profile = { id: string; alias: string; publicRanking: boolean; calibration: Record<string, number>; createdAt: string; updatedAt: string };
+async function readProfiles(): Promise<Profile[]> {
+  try { const value = JSON.parse(await fs.readFile(FILE, "utf8")); return Array.isArray(value) ? value : []; } catch { return []; }
+}
+async function writeProfiles(items: Profile[]) {
+  await fs.mkdir(path.dirname(FILE), { recursive: true });
+  const tmp = `${FILE}.${randomUUID()}.tmp`;
+  await fs.writeFile(tmp, JSON.stringify(items, null, 2), "utf8"); await fs.rename(tmp, FILE);
+}
+export async function getProfile(id: string) { return (await readProfiles()).find((item) => item.id === id) ?? null; }
+export async function saveProfile(id: string, patch: Partial<Pick<Profile, "alias" | "publicRanking" | "calibration">>) {
+  if (!/^[a-zA-Z0-9_-]{12,80}$/.test(id)) return null;
+  const profiles = await readProfiles(); const current = profiles.find((p) => p.id === id);
+  const now = new Date().toISOString();
+  const alias = typeof patch.alias === "string" ? patch.alias.trim().replace(/[<>\n\r]/g, "").slice(0, 24) : current?.alias ?? "Переговорщик";
+  const profile: Profile = { id, alias: alias || "Переговорщик", publicRanking: patch.publicRanking === true || (patch.publicRanking === undefined && current?.publicRanking === true), calibration: patch.calibration ?? current?.calibration ?? {}, createdAt: current?.createdAt ?? now, updatedAt: now };
+  const index = profiles.findIndex((p) => p.id === id); if (index < 0) profiles.push(profile); else profiles[index] = profile;
+  await writeProfiles(profiles); return profile;
+}
+export async function getProgress(id: string) {
+  const [profiles, all] = await Promise.all([readProfiles(), readAttempts()]);
+  const profile = profiles.find((p) => p.id === id) ?? null;
+  const attempts = all.filter((a) => a.profileId === id && a.status === "completed" && a.report);
+  const skills = new Map<string, { name:string; mode:string; scores: number[]; evidence: number }>();
+  for (const attempt of attempts) if ((attempt.practiceMode ?? "independent") !== "diagnostic") for (const [name, score] of Object.entries(attempt.report?.skillScores ?? {})) {
+    const mode=attempt.practiceMode ?? "independent"; const key=`${mode}:${name}`; const entry = skills.get(key) ?? { name, mode, scores: [], evidence: 0 }; entry.scores.push(score); entry.evidence += 1; skills.set(key, entry);
+  }
+  const skillRows = [...skills.values()].map((item) => ({ name:item.name, mode:item.mode, score: Math.round(item.scores.reduce((a,b)=>a+b,0) / item.scores.length), attempts: item.evidence, trend: item.scores.length > 1 ? item.scores.at(-1)! - item.scores[0] : 0 })).sort((a,b)=>a.mode.localeCompare(b.mode)||b.score-a.score);
+  const achievements = [
+    { id: "first", title: "Первый раунд", description: "Завершите первую самостоятельную попытку", earned: attempts.some(a => (a.practiceMode ?? "independent") === "independent") },
+    { id: "listener", title: "Сначала понять", description: "Выявите интересы в трёх раундах", earned: attempts.filter(a => a.signals.includes("asks-needs")).length >= 3 },
+    { id: "next-step", title: "Есть следующий шаг", description: "Зафиксируйте следующий шаг в трёх раундах", earned: attempts.filter(a => a.signals.includes("sets-next-step")).length >= 3 },
+    { id: "responsible", title: "Границы соблюдены", description: "Откажитесь от невыполнимого обещания", earned: attempts.some(a => a.signals.includes("declines-unrealistic")) },
+    { id: "reflect", title: "Практика с выводом", description: "Повторите сценарий и сравните попытки", earned: attempts.some(a => Boolean(a.report?.comparison)) },
+  ];
+  const calibrationCount = Object.keys(profile?.calibration ?? {}).length;
+  const independentSkills=skillRows.filter(s=>s.mode==="independent"); const weakest=independentSkills.slice().sort((a,b)=>a.score-b.score)[0];
+  const recommendation=weakest ? {skill:weakest.name, explanation:`Попробуйте отработать «${weakest.name}» в самостоятельной попытке.`, scenarioId:attempts.find(a=>(a.practiceMode??"independent")==="independent"&&a.report?.skillScores?.[weakest.name]!==undefined)?.scenarioId??"pilot-prospect"} : {skill:"Самостоятельный раунд",explanation:"Пройдите первый самостоятельный сценарий, чтобы получить наблюдаемую стартовую точку.",scenarioId:"pilot-prospect"};
+  return { profile, attempts: attempts.map(a => ({ id:a.id, scenarioId:a.scenarioId, scenarioTitle:a.scenario.title, scenarioVersion:a.scenarioVersion, difficulty:a.scenario.difficulty ?? "Средняя", mode:a.practiceMode ?? "independent", outcome:a.report?.outcome, skillScores:a.report?.skillScores, comparison:a.report?.comparison, createdAt:a.createdAt, signals:a.signals })), skills:skillRows, recommendation, achievements, calibrationCount, calibrationReady: calibrationCount >= 3, totalAttempts:attempts.length, totalPoints:attempts.reduce((sum,a)=>sum+(a.report?.outcome?.score ?? 0),0) };
+}
+async function readAttempts(): Promise<Attempt[]> { try { const value = JSON.parse(await fs.readFile(path.join(process.cwd(), "data", "attempts.json"), "utf8")); return Array.isArray(value) ? value : []; } catch { return []; } }
+export async function leaderboard(scenarioId: string, scenarioVersion: number, difficulty: string, mode: string) {
+  const [profiles, attempts] = await Promise.all([readProfiles(), readAttempts()]);
+  const byProfile = new Map<string, Attempt[]>();
+  for (const a of attempts) if (a.profileId && a.status === "completed" && a.report?.outcome && a.scenarioId === scenarioId && a.scenarioVersion === scenarioVersion && (a.scenario.difficulty ?? "Средняя") === difficulty && (a.practiceMode ?? "independent") === mode) byProfile.set(a.profileId, [...(byProfile.get(a.profileId) ?? []), a]);
+  return [...byProfile].flatMap(([id, rows]) => { const p=profiles.find(x=>x.id===id); if (!p?.publicRanking || !rows.length) return []; const best=Math.max(...rows.map(a=>a.report?.outcome?.score ?? 0)); return [{ alias:p.alias, score:best, attempts:rows.length, outcome:rows.find(a=>a.report?.outcome?.score===best)?.report?.outcome?.label ?? "", scenarioId,difficulty,mode }]; }).sort((a,b)=>b.score-a.score || a.alias.localeCompare(b.alias,"ru")).slice(0,50);
+}
