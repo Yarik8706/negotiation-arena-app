@@ -1,0 +1,374 @@
+{
+  "meta": [
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-home-light-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 2634
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-learn-light-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 1695
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-group-light-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 1225
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-progress-light-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 1937
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-admin-light-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 2451
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-home-dark-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 2634
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-learn-dark-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 1695
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-group-dark-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 1225
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-progress-dark-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 1937
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-admin-dark-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 2451
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-home-light-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": true,
+      "bitmapWidth": 375,
+      "bitmapHeight": 4199
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-learn-light-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": true,
+      "bitmapWidth": 375,
+      "bitmapHeight": 2487
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-group-light-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": true,
+      "bitmapWidth": 375,
+      "bitmapHeight": 1878
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-progress-light-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": true,
+      "bitmapWidth": 375,
+      "bitmapHeight": 3008
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-admin-light-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": true,
+      "bitmapWidth": 375,
+      "bitmapHeight": 4111
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-home-dark-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": true,
+      "bitmapWidth": 375,
+      "bitmapHeight": 4199
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-learn-dark-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": true,
+      "bitmapWidth": 375,
+      "bitmapHeight": 2487
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-group-dark-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": true,
+      "bitmapWidth": 375,
+      "bitmapHeight": 1878
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-progress-dark-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": true,
+      "bitmapWidth": 375,
+      "bitmapHeight": 3008
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-admin-dark-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": true,
+      "bitmapWidth": 375,
+      "bitmapHeight": 4111
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-round-guided-light-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 1602
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-round-guided-dark-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 1602
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-round-guided-dark-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": true,
+      "bitmapWidth": 375,
+      "bitmapHeight": 1972
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-round-guided-light-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": true,
+      "bitmapWidth": 375,
+      "bitmapHeight": 1972
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-report-light-top-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": false,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 900
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-report-light-actions-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": false,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 900
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-report-light-top-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": false,
+      "bitmapWidth": 375,
+      "bitmapHeight": 844
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-report-light-actions-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": false,
+      "bitmapWidth": 375,
+      "bitmapHeight": 844
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-report-dark-top-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": false,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 900
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-progress-with-attempt-dark-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 1961
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-diagnostic-dark-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 1203
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-diagnostic-light-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": true,
+      "bitmapWidth": 375,
+      "bitmapHeight": 1812
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-mobile-navigation-light-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": false,
+      "bitmapWidth": 375,
+      "bitmapHeight": 844
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-group-active-light-375.png",
+      "width": 375,
+      "height": 844,
+      "client": 375,
+      "scroll": 375,
+      "full": true,
+      "bitmapWidth": 375,
+      "bitmapHeight": 1754
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-group-active-dark-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 1024
+    },
+    {
+      "file": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-29/dossier-accepted-round-independent-dark-1280.png",
+      "width": 1280,
+      "height": 900,
+      "client": 1280,
+      "scroll": 1280,
+      "full": true,
+      "bitmapWidth": 1280,
+      "bitmapHeight": 1102
+    }
+  ],
+  "errors": [],
+  "attemptIds": [
+    "d236d6fe-6403-4867-93ff-2e1c774fc313",
+    "4cb52ba1-e9e5-4e82-9db6-7be625429cc5",
+    "8a11b724-1bf0-484e-bf23-ac3f23997004",
+    "149bee1f-aef3-48a7-8522-6d96b762eec9"
+  ],
+  "roomIds": [
+    "f98e2789-5218-4892-b64c-53e6b1e42699"
+  ]
+}
