@@ -1,26 +1,25 @@
 import assert from "node:assert/strict";
-import { readFile, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 
 const base = process.env.BASE_URL || "http://127.0.0.1:3000";
 const testAttemptIds = [];
+const profileId = `local-${randomUUID()}`;
+const accessHeaders = { "x-profile-id":profileId, ...(process.env.SMOKE_ADMIN_TOKEN ? { authorization:`Bearer ${process.env.SMOKE_ADMIN_TOKEN}` } : {}) };
 async function cleanup() {
-  try {
-    const stored = JSON.parse(await readFile(new URL("../data/attempts.json", import.meta.url), "utf8"));
-    await writeFile(new URL("../data/attempts.json", import.meta.url), `${JSON.stringify(stored.filter((a) => !testAttemptIds.includes(a.id)), null, 2)}\n`);
-  } catch (error) {
-    if (error.code !== "ENOENT") throw error;
+  for (const id of testAttemptIds) {
+    try { await fetch(`${base}/api/attempts/${id}`,{method:"DELETE",headers:accessHeaders}); } catch { /* test server may be unavailable */ }
   }
   for (const id of ["smoke-config-calm", "smoke-config-firm", "smoke-custom-draft"]) {
-    try { await fetch(`${base}/api/scenarios?id=${id}`, { method: "DELETE" }); } catch { /* The server may have stopped after a failed run. */ }
+    try { await fetch(`${base}/api/scenarios?id=${id}`, { method: "DELETE", headers:accessHeaders }); } catch { /* The server may have stopped after a failed run. */ }
   }
 }
 async function request(path, init) {
-  const response = await fetch(`${base}${path}`, init);
+  const response = await fetch(`${base}${path}`, { ...init, headers:{...accessHeaders,...init?.headers} });
   const data = await response.json();
   return { response, data };
 }
 async function start(scenarioId, previousAttemptId, variationId, preview = false) {
-  const { response, data } = await request("/api/attempts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ scenarioId, previousAttemptId, variationId, preview }) });
+  const { response, data } = await request("/api/attempts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ scenarioId, previousAttemptId, variationId, preview, profileId }) });
   assert.equal(response.status, 201, JSON.stringify(data));
   testAttemptIds.push(data.id);
   return data;
@@ -70,12 +69,19 @@ for (const [id, tone] of [["smoke-config-calm", "спокойный аналит
   const snapshotRetry = await start(id, configured.id);
   assert.equal(snapshotRetry.scenario.title, scenario.title, "Retry must preserve the original scenario snapshot");
   assert.equal(snapshotRetry.scenarioVersion, 1);
-  await request(`/api/scenarios?id=${id}`, { method: "DELETE" });
+  await request(`/api/scenarios?id=${id}`, { method: "DELETE", headers:accessHeaders });
 }
 assert.notEqual(configuredReplies[0], configuredReplies[1], "Changing configured tone should change the deterministic mock reply");
 
 const pilot = await start("pilot-prospect");
+const advice = await request("/api/advisor", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ scenarioId: "pilot-prospect", messages: [] }) });
+assert.equal(advice.response.status, 200);
+assert.doesNotMatch(advice.data.advice, /скидк|предоплат/, "Pilot advice must not refer to unrelated pricing terms");
 let updated = await play(pilot, "Какая задача для вас важнее и что станет критерием успеха?");
+assert.match(updated.messages.at(-1).content, /эффект|квартал|внедрение/, "Pilot opponent should answer the player's question in context");
+const temperature = await request("/api/temperature", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: updated.messages }) });
+assert.equal(temperature.response.status, 200);
+assert.match(temperature.data.reason, /уточняет условия/, "A neutral question must not be described as pressure");
 updated = await play(updated, "Предлагаю ограниченный пилот с критериями. Давайте назначим встречу и дату проверки результата.");
 const report1 = await finish(updated.id);
 assert.equal(report1.report.outcome.id, "pilot-agreed");
@@ -131,10 +137,11 @@ assert.equal(hiddenDraft.response.status, 404);
 const preview = await start(draft.id, undefined, undefined, true);
 assert.ok(!Object.hasOwn(preview, "baseScenario"), "Public attempt response must not expose the private base snapshot");
 assert.ok(!JSON.stringify(preview).includes("hiddenInterests"), "Preview attempt DTO must not expose hidden interests");
-await request(`/api/scenarios?id=${draft.id}`, { method: "DELETE" });
+await request(`/api/scenarios?id=${draft.id}`, { method: "DELETE", headers:accessHeaders });
 
 const deadline = await start("project-deadline");
 const unsafe = await play(deadline, "Обещаю: точно успеем к пятнице, гарантирую эту дату без проверки зависимостей.");
+assert.match(unsafe.messages.at(-1).content, /срок|план|интеграц/, "Deadline opponent should react to an unchecked promise");
 const unsafeReport = await finish(unsafe.id);
 assert.equal(unsafeReport.report.outcome.id, "overpromise");
 const responsible = await start("project-deadline");

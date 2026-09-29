@@ -1,4 +1,4 @@
-import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
+import { neon, Pool, neonConfig, type PoolClient, type NeonQueryFunction } from "@neondatabase/serverless";
 
 /** Resolve Neon/Postgres URL without logging it. */
 export function getDatabaseUrl(): string | undefined {
@@ -27,4 +27,22 @@ export function sql(): Sql {
   }
   cached = neon(url);
   return cached;
+}
+
+// Interactive transactions use WebSockets; HTTP remains the fast read path.
+let pool: Pool | undefined;
+export async function withDbTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  neonConfig.webSocketConstructor = WebSocket;
+  pool ??= new Pool({ connectionString: getDatabaseUrl(), max: 5, idleTimeoutMillis: 10000 });
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("SET LOCAL statement_timeout = '15s'");
+    const result = await fn(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally { client.release(); }
 }

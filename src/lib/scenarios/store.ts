@@ -4,7 +4,7 @@ import { isDbConfigured, sql } from "@/lib/db";
 import { ALL_SCENARIOS, SEED_SCENARIO } from "./seed";
 import type { PublicScenario, Scenario } from "./types";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const DATA_DIR = process.env.ARENA_DATA_DIR ?? path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "scenarios.json");
 
 function preserveSeedCapabilities(scenario: Scenario): Scenario {

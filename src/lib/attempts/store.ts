@@ -1,11 +1,22 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
-import { isDbConfigured, sql } from "@/lib/db";
+import { AsyncLocalStorage } from "node:async_hooks";
+import type { PoolClient } from "@neondatabase/serverless";
+import { isDbConfigured, sql, withDbTransaction } from "@/lib/db";
 import { getScenario, toPublicScenario } from "@/lib/scenarios/store";
 import type { Attempt, ChatMessage, FinalReport, Scenario, ScenarioVariation } from "@/lib/scenarios/types";
 
-const FILE = path.join(process.cwd(), "data", "attempts.json");
+const context = new AsyncLocalStorage<PoolClient>();
+async function locked<T>(id: string, fn: () => Promise<T>): Promise<T> {
+  if (!isDbConfigured()) return fn();
+  return withDbTransaction(async (db) => {
+    await db.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [id]);
+    await db.query("SELECT id FROM attempts WHERE id::text = $1 FOR UPDATE", [id]);
+    return context.run(db, fn);
+  });
+}
+const FILE = path.join(process.env.ARENA_DATA_DIR ?? path.join(process.cwd(), "data"), "attempts.json");
 
 function parsePayload(payload: unknown): Attempt {
   return (typeof payload === "string" ? JSON.parse(payload) : payload) as Attempt;
@@ -38,12 +49,23 @@ async function readAllDb(): Promise<Attempt[]> {
 }
 
 async function getAttemptDb(id: string): Promise<Attempt | null> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null;
+  const client = context.getStore();
+  if (client) {
+    const { rows } = await client.query("SELECT payload FROM attempts WHERE id = $1::uuid", [id]);
+    return rows[0] ? parsePayload(rows[0].payload) : null;
+  }
   const db = sql();
   const rows = await db`SELECT payload FROM attempts WHERE id = ${id}::uuid LIMIT 1`;
   return rows[0] ? parsePayload(rows[0].payload) : null;
 }
 
 async function upsertAttemptDb(attempt: Attempt): Promise<void> {
+  const client = context.getStore();
+  if (client) {
+    await client.query("UPDATE attempts SET payload=$2::jsonb,status=$3,updated_at=$4 WHERE id=$1::uuid", [attempt.id,JSON.stringify(attempt),attempt.status,attempt.updatedAt]);
+    return;
+  }
   const db = sql();
   await db`
     INSERT INTO attempts (id, scenario_id, payload, status, created_at, updated_at)
@@ -65,8 +87,13 @@ async function upsertAttemptDb(attempt: Attempt): Promise<void> {
 
 /* ---------- Shared helpers ---------- */
 
-export async function listAttempts(): Promise<Attempt[]> {
-  return isDbConfigured() ? readAllDb() : readAllJson();
+export async function listAttempts(profileId?: string): Promise<Attempt[]> {
+  if (profileId && isDbConfigured()) {
+    const db = sql();
+    return (await db`SELECT payload FROM attempts WHERE payload->>'profileId'=${profileId} ORDER BY created_at ASC`).map((row) => parsePayload(row.payload));
+  }
+  const rows = isDbConfigured() ? await readAllDb() : await readAllJson();
+  return profileId ? rows.filter((a) => a.profileId === profileId) : rows;
 }
 
 export async function getAttempt(id: string) {
@@ -77,6 +104,7 @@ export async function getAttempt(id: string) {
 export function toPublicAttempt(attempt: Attempt) {
   const publicFields = { ...attempt };
   delete publicFields.baseScenario;
+  delete publicFields.profileId;
   return { ...publicFields, scenario: toPublicScenario(attempt.scenario) };
 }
 
@@ -146,6 +174,7 @@ export async function createAttempt(
 }
 
 export async function appendTurn(id: string, userText: string, reply: string): Promise<Attempt | null> {
+  return locked(id, async () => {
   const attempt = await getAttempt(id);
   if (!attempt || attempt.status !== "active") return null;
   const player: ChatMessage = { id: randomUUID(), role: "user", content: userText };
@@ -186,6 +215,7 @@ export async function appendTurn(id: string, userText: string, reply: string): P
   items[index] = attempt;
   await writeAllJson(items);
   return attempt;
+  });
 }
 
 export function evaluate(attempt: Attempt): { id: string; label: string; score: number; signals: string[] } {
@@ -270,6 +300,7 @@ export function buildReport(attempt: Attempt): FinalReport {
 }
 
 export async function completeAttempt(id: string): Promise<Attempt | null> {
+  return locked(id, async () => {
   const attempt = await getAttempt(id);
   if (!attempt) return null;
   if (attempt.status === "completed") return attempt;
@@ -307,4 +338,19 @@ export async function completeAttempt(id: string): Promise<Attempt | null> {
   items[index] = attempt;
   await writeAllJson(items);
   return attempt;
+  });
+}
+
+export async function deleteAttempt(id: string): Promise<void> {
+  if (isDbConfigured()) { const db = sql(); await db`DELETE FROM attempts WHERE id = ${id}::uuid`; }
+  else await writeAllJson((await readAllJson()).filter((a) => a.id !== id));
+}
+
+export async function listRankingAttempts(scenarioId: string, period: string): Promise<Attempt[]> {
+  if (!isDbConfigured()) return (await readAllJson()).filter((a) => a.scenarioId === scenarioId && a.status === "completed" && (period === "all" || a.createdAt.startsWith(period)));
+  const db = sql();
+  const start = period === "all" ? "1970-01-01T00:00:00Z" : `${period}-01T00:00:00Z`;
+  const end = period === "all" ? "9999-01-01T00:00:00Z" : new Date(Date.UTC(Number(period.slice(0,4)),Number(period.slice(5,7)),1)).toISOString();
+  const rows = await db`SELECT payload FROM attempts WHERE scenario_id=${scenarioId} AND status='completed' AND created_at>=${start}::timestamptz AND created_at<${end}::timestamptz ORDER BY created_at`;
+  return rows.map((row) => parsePayload(row.payload));
 }

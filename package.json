@@ -9,7 +9,9 @@
     "lint": "eslint",
     "smoke": "node scripts/smoke.mjs",
     "demo:reset": "node scripts/reset-demo.mjs",
-    "db:migrate": "node scripts/migrate.mjs"
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:verify": "node scripts/verify-database.mjs",
+    "db:prepare-import": "node scripts/prepare-json-import.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -29,5 +31,8 @@
     "eslint-config-next": "15.5.25",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

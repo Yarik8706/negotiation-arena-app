@@ -41,10 +41,10 @@ loadEnvFile(path.join(root, ".env.local"));
 loadEnvFile(path.join(root, ".env"));
 
 const url =
-  process.env.DATABASE_URL?.trim() ||
-  process.env.POSTGRES_URL?.trim() ||
   process.env.DATABASE_URL_UNPOOLED?.trim() ||
-  process.env.POSTGRES_URL_NON_POOLING?.trim();
+  process.env.POSTGRES_URL_NON_POOLING?.trim() ||
+  process.env.DATABASE_URL?.trim() ||
+  process.env.POSTGRES_URL?.trim();
 
 if (!url) {
   console.error(
@@ -90,11 +90,10 @@ async function appliedIds() {
 async function applyFile(name, fullPath) {
   const text = await readFileAsync(fullPath, "utf8");
   const statements = splitStatements(text);
-  for (const statement of statements) {
-    if (/CREATE TABLE IF NOT EXISTS _migrations/i.test(statement)) continue;
-    await sql.query(statement);
-  }
-  await sql`INSERT INTO _migrations (id) VALUES (${name}) ON CONFLICT (id) DO NOTHING`;
+  await sql.transaction([
+    ...statements.filter((statement) => !/CREATE TABLE IF NOT EXISTS _migrations/i.test(statement)).map((statement) => sql.query(statement)),
+    sql`INSERT INTO _migrations (id) VALUES (${name})`,
+  ]);
 }
 
 const migrationsDir = path.join(root, "db", "migrations");
