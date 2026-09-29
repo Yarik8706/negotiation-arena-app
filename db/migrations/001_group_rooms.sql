@@ -46,3 +46,5 @@ CREATE TABLE group_matchmaking_tickets (
 );
 
 CREATE INDEX group_matchmaking_waiting ON group_matchmaking_tickets(created_at) WHERE state = 'waiting';
+
+-- NOTE: group-rooms JSON store remains in use until a later cutover; schema above is the target.
