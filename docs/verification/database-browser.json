@@ -1,0 +1,97 @@
+{
+  "result": "passed",
+  "date": "2026-09-29T21:44:45.121Z",
+  "checks": [
+    "export/import access into separate browser context",
+    "restore alias and progress",
+    "period and own rating position",
+    "invalid-file error",
+    "delete history while preserving profile"
+  ],
+  "evidence": [
+    {
+      "path": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-30/db-progress-versioned-skills-desktop-1280x900-1790718281803.png",
+      "innerWidth": 1280,
+      "innerHeight": 900,
+      "clientWidth": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "path": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-30/db-progress-transfer-desktop-1280x900-1790718281803.png",
+      "innerWidth": 1280,
+      "innerHeight": 900,
+      "clientWidth": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "path": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-30/db-progress-rating-period-desktop-1280x900-1790718281803.png",
+      "innerWidth": 1280,
+      "innerHeight": 900,
+      "clientWidth": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "path": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-30/db-progress-versioned-skills-mobile-390x844-1790718281803.png",
+      "innerWidth": 390,
+      "innerHeight": 844,
+      "clientWidth": 390,
+      "scrollWidth": 390
+    },
+    {
+      "path": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-30/db-progress-versioned-history-mobile-390x844-1790718281803.png",
+      "innerWidth": 390,
+      "innerHeight": 844,
+      "clientWidth": 390,
+      "scrollWidth": 390
+    },
+    {
+      "path": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-30/db-progress-transfer-mobile-390x844-1790718281803.png",
+      "innerWidth": 390,
+      "innerHeight": 844,
+      "clientWidth": 390,
+      "scrollWidth": 390
+    },
+    {
+      "path": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-30/db-progress-ranking-mobile-390x844-1790718281803.png",
+      "innerWidth": 390,
+      "innerHeight": 844,
+      "clientWidth": 390,
+      "scrollWidth": 390
+    },
+    {
+      "path": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-30/db-progress-transfer-narrow-320x844-1790718281803.png",
+      "innerWidth": 320,
+      "innerHeight": 844,
+      "clientWidth": 320,
+      "scrollWidth": 320
+    },
+    {
+      "path": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-30/db-progress-ranking-narrow-320x844-1790718281803.png",
+      "innerWidth": 320,
+      "innerHeight": 844,
+      "clientWidth": 320,
+      "scrollWidth": 320
+    },
+    {
+      "path": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-30/db-progress-import-error-narrow-320x844-1790718281803.png",
+      "innerWidth": 320,
+      "innerHeight": 844,
+      "clientWidth": 320,
+      "scrollWidth": 320
+    },
+    {
+      "path": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-30/db-progress-transfer-alternate-theme-mobile-390x844-1790718281803.png",
+      "innerWidth": 390,
+      "innerHeight": 844,
+      "clientWidth": 390,
+      "scrollWidth": 390
+    },
+    {
+      "path": "/Users/yaroslav/Documents/Projects/FullstackProjects/negotiation-arena-app/screenshots/2026-09-30/db-progress-erased-history-mobile-390x844-1790718281803.png",
+      "innerWidth": 390,
+      "innerHeight": 844,
+      "clientWidth": 390,
+      "scrollWidth": 390
+    }
+  ]
+}

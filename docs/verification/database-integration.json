@@ -1,0 +1,20 @@
+{
+  "date": "2026-09-29T21:44:50.389Z",
+  "result": "passed",
+  "checks": [
+    "admin protection, session cookie, origin, catalog privacy",
+    "owner access, concurrent turns, idempotent finish, immutable retry",
+    "persistent progress, mode separation, ranking consent, period, own position and privacy",
+    "cross-process invitation race, room access, turn order, concurrent bot room",
+    "atomic matchmaking, one-time encrypted delivery, cancellation",
+    "protected scenario draft, preview, publication, saved version snapshot",
+    "attempt, room and progress restore after process restart",
+    "browser acceptance and fresh responsive screenshots",
+    "owner deletion and shared-room erasure"
+  ],
+  "servers": [
+    3211,
+    3212
+  ],
+  "mode": "Neon disposable branch + deterministic mock"
+}
